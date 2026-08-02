@@ -1,0 +1,119 @@
+<div class="page" *ngIf="!loading && data">
+  <header class="header">
+    <div>
+      <p class="eyebrow">Presupuesto · mes actual</p>
+      <h1 class="title">Finanzas del mes</h1>
+    </div>
+    <div class="header-stats">
+      <div class="stat">
+        <span class="stat-label">Ingreso semanal</span>
+        <span class="stat-value income">{{ data.ingreso_semanal | currency:'MXN' }}</span>
+      </div>
+      <div class="stat">
+        <span class="stat-label">Ingreso mensual</span>
+        <span class="stat-value income">{{ data.ingreso_mensual | currency:'MXN' }}</span>
+      </div>
+      <div class="stat">
+        <span class="stat-label">Efectivo hoy</span>
+        <span class="stat-value big" [class.alert]="data.efectivo_dia_hoy < 0">
+          {{ data.efectivo_dia_hoy | currency:'MXN' }}
+        </span>
+      </div>
+    </div>
+  </header>
+
+  <div class="grid">
+    <!-- Pagos fijos -->
+    <section class="card span-7">
+      <div class="card-head">
+        <h2>Pagos fijos</h2>
+        <span class="card-sub">{{ totalPagado() | currency:'MXN' }} pagado este mes</span>
+      </div>
+
+      <div class="row" *ngFor="let pago of data.pagos">
+        <div class="row-left">
+          <div>
+            <div class="row-concepto">{{ pago.obligacion.concepto }}</div>
+            <div class="row-dia" *ngIf="pago.obligacion.dia_cobro">Día {{ pago.obligacion.dia_cobro }}</div>
+          </div>
+        </div>
+        <div class="row-right">
+          <span class="row-monto">{{ pago.monto_pagado > 0 ? (pago.monto_pagado | currency:'MXN') : '—' }}</span>
+          <button *ngIf="pago.notas" class="nota-btn" (click)="toggleNota(pago.id)">i</button>
+          <app-toggle-switch
+            [checked]="pago.pagado"
+            (checkedChange)="onTogglePago(pago, $event)"
+          ></app-toggle-switch>
+        </div>
+        <div class="nota-box" *ngIf="notaAbierta === pago.id && pago.notas">{{ pago.notas }}</div>
+      </div>
+    </section>
+
+    <!-- Suscripciones + Gasto variable -->
+    <div class="span-5 col-stack">
+      <section class="card">
+        <div class="card-head">
+          <h2>Suscripciones</h2>
+        </div>
+        <div class="sub-row" *ngFor="let s of data.suscripciones">
+          <span>{{ s.concepto }}</span>
+          <span>{{ s.monto_base | currency:'MXN' }}</span>
+        </div>
+        <div class="sub-total">
+          <span>Total mensual</span>
+          <span>{{ totalSuscripciones() | currency:'MXN' }}</span>
+        </div>
+      </section>
+
+      <section class="card">
+        <h2>Gasto variable</h2>
+        <div *ngFor="let g of data.gastos_variables" class="gasto-block">
+          <div class="sub-row">
+            <span>{{ g.categoria }}</span>
+            <span>{{ g.monto_consumido | currency:'MXN' }} / {{ g.monto_asignado | currency:'MXN' }}</span>
+          </div>
+          <div class="bar-track">
+            <div class="bar-fill" [style.width.%]="pctGasto(g.monto_consumido, g.monto_asignado)"></div>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <!-- Tarjetas -->
+    <section class="card span-7">
+      <div class="card-head">
+        <h2>Límite de tarjetas</h2>
+        <span class="card-sub">{{ totalDeuda() | currency:'MXN' }} de {{ totalLimite() | currency:'MXN' }} usado</span>
+      </div>
+      <div *ngFor="let t of data.tarjetas" class="tarjeta-block">
+        <div class="sub-row">
+          <span>{{ t.entidad.nombre }}</span>
+          <span>{{ t.deuda_actual | currency:'MXN' }} <span class="faint">/ {{ t.limite_total | currency:'MXN' }}</span></span>
+        </div>
+        <div class="bar-track">
+          <div
+            class="bar-fill"
+            [class.high]="pctTarjeta(t.deuda_actual, t.limite_total) > 60"
+            [style.width.%]="pctTarjeta(t.deuda_actual, t.limite_total)"
+          ></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Resumen de deuda -->
+    <section class="card span-5 debt-card">
+      <h2 class="light">Deuda a día de hoy</h2>
+      <div class="debt-row" *ngFor="let t of data.tarjetas">
+        <span>Tarjeta {{ t.entidad.nombre }}</span>
+        <span>{{ t.deuda_actual | currency:'MXN' }}</span>
+      </div>
+      <div class="debt-row total">
+        <span>Total</span>
+        <span>{{ totalDeuda() | currency:'MXN' }}</span>
+      </div>
+    </section>
+  </div>
+</div>
+
+<div class="state-msg" *ngIf="loading">Cargando presupuesto…</div>
+<div class="state-msg error" *ngIf="error">{{ error }}</div>

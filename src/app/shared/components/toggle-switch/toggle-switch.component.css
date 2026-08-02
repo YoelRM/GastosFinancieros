@@ -1,0 +1,29 @@
+.toggle {
+  width: 34px;
+  height: 18px;
+  border-radius: 10px;
+  border: none;
+  padding: 2px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  background: var(--line, #e3e1d8);
+  transition: background 0.15s;
+}
+
+.toggle.on {
+  background: var(--income, #2f6e51);
+}
+
+.dot {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: #fff;
+  transition: transform 0.15s;
+  display: block;
+}
+
+.toggle.on .dot {
+  transform: translateX(16px);
+}
